@@ -10,5 +10,5 @@ LF Device Prerequisites:
 
 SDL - http://elinux.org/Didj_and_Explorer_libSDL
 
-Binaries are in /binaries_lf1000.
-Source for LF devices is /lf1000.
+Binaries for LX are in /binaries_lf1000.
+Source for LF1000-based devices is in /lf1000.
