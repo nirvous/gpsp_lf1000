@@ -1,0 +1,14 @@
+-- gameplaySP2X  Gameboy Advance emulator for LF1000 --
+
+(Created by Exophase, ported to Pollux by notaz, ported to LF devices by nirvous.)
+
+
+LF Device Prerequisites:
+-------------------------
+
+64MB RAM (Leapster Explorer. A stock Didj cannot run the emulator at this time)
+
+SDL - http://elinux.org/Didj_and_Explorer_libSDL
+
+Binaries are in /binaries_lf1000.
+Source for LF devices is /lf1000.
