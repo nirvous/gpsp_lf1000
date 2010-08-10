@@ -1,0 +1,20 @@
+ARCH=arm
+CC=/usr/local/didj/bin/arm-linux-uclibcgnueabi-gcc
+CXX=/usr/local/didj/bin/arm-linux-uclibcgnueabi-gcc
+CROSS_COMPILE=arm-linux-uclibcgnueabi-
+
+RELEASE=2.6.31-leapfrog
+ROOTFS_PATH=/media/xcompilers/explorer-LF-Linux-6905-20100610-0915/target/didj-rootfs
+KERNEL_DIR = $(ROOTFS_PATH)/lib/modules/$(RELEASE)/build
+obj-m += warm.o
+warm-objs += warm_main.o warm_ops.o
+#CFLAGS     += -DDIDJ_BUILD
+CFLAGS     += -DLX_BUILD
+
+all:
+	make -C $(KERNEL_DIR) M=$(PWD) modules
+
+clean:
+	make -C $(KERNEL_DIR) M=$(PWD) clean
+	$(RM) modules.order Module.markers
+
