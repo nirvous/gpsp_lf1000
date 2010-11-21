@@ -38,7 +38,8 @@ SDL_cond *sound_cv;
 #ifndef PSP_BUILD
 u32 audio_buffer_size_number = 7;
 #else
-u32 audio_buffer_size_number = 1;
+
+u32 audio_buffer_size_number = 3;
 #endif
 
 u32 audio_buffer_size;
@@ -487,8 +488,8 @@ void update_gbc_sound(u32 cpu_ticks)
       }
 #endif
 
-/*
 
+// should this be uncommented? Reggie
 #ifdef GP2X_BUILD
       if(current_frameskip_type == auto_frameskip)
       {
@@ -505,7 +506,7 @@ void update_gbc_sound(u32 cpu_ticks)
       }
 #endif
 
-*/
+
     }
   }
   if(sound_on == 1)
@@ -756,12 +757,15 @@ void init_sound()
 #ifdef PSP_BUILD
   audio_buffer_size = (audio_buffer_size_number * 1024) + 3072;
 #elif defined(TAVI_BUILD) || defined(ARM_ARCH)
-  audio_buffer_size = 16 << audio_buffer_size_number;
-//  audio_buffer_size = 16384;
+  //audio_buffer_size = 16 << audio_buffer_size_number;
+  // change added by Reggie, hardcoded seems to work much better
+  // don't understand the commented out code, its not returning expected values?
+  // in the printf below
+  audio_buffer_size = 1024;
 #else
   audio_buffer_size = 16384;
 #endif
-
+printf("Audio Buffer Size %d %d \n", audio_buffer_size, audio_buffer_size_number);
   SDL_AudioSpec desired_spec =
   {
     sound_frequency,

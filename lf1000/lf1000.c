@@ -31,6 +31,7 @@
 #include "warm.h"
 #include "pollux_dpc_set.h"
 
+
 //nirvous
 #include <linux/input.h> //support for event device
 #include <fcntl.h>
@@ -69,14 +70,18 @@ static int fbdev;
 
 static void fb_video_init()
 {
+  // setup structs to hold framebuffer fixed and variable info
+  // see /include/linux/fb.h for usable variables
   struct fb_fix_screeninfo fbfix;
+  struct fb_var_screeninfo fbvar;
   int i, ret;
 
   fbdev = open("/dev/fb0", O_RDWR);
+  // does the framebuffer exist?
   if (fbdev < 0) {
     perror("can't open fbdev");
     printf("attempting mlc\n");
-  
+
    //nirvous - added support for MLC driver
     fbdev = open("/dev/layer0", O_RDWR);
 	if (fbdev < 0) {
@@ -103,22 +108,42 @@ static void fb_video_init()
 
   else
   {
-	  ret = ioctl(fbdev, FBIOGET_FSCREENINFO, &fbfix);
-	  if (ret == -1)
-	  {
-		perror("ioctl(fbdev) failed");
-		exit(1);
-	  }
+    // framebuffer exists, deep joy, get the fixed info
+    ret = ioctl(fbdev, FBIOGET_FSCREENINFO, &fbfix);
+    // make sure we got something
+    if (ret == -1)
+    {
+    // just die? might not matter as we've already failed to find the mlc
+    // must be a bigger kernel issue :D
+	perror("ioctl(fbdev) failed");
+	exit(1);
+    }
 
-	  printf("framebuffer: \"%s\" @ %08lx\n", fbfix.id, fbfix.smem_start);
-	  fb_paddr[0] = fbfix.smem_start;
+      ret = ioctl(fbdev, FBIOGET_VSCREENINFO, &fbvar);
+      // just as we do with the stock driver we should backup the
+      // format/screen data to restore it later on.
+
+      original_mlcformat = ioctl(fbdev, MLC_IOCQFORMAT, 0);
+      original_mlchstride = fbvar.bits_per_pixel/8;
+      original_mlcvstride = fbvar.xres*original_mlchstride;
+      // now set the mode to 565, Bytes Per Pixel 2, and the vstride
+      ioctl(fbdev, MLC_IOCTFORMAT, 0x4432);
+      ioctl(fbdev, MLC_IOCTHSTRIDE, 2);
+      ioctl(fbdev, MLC_IOCTVSTRIDE, 320*2);
+      // make it happen
+      ioctl(fbdev, MLC_IOCTDIRTY, 0);
+
+      printf("framebuffer: \"%s\" @ %08lx\n", fbfix.id, fbfix.smem_start);
+      fb_paddr[0] = fbfix.smem_start;
   }
+
+
   fb_vaddr[0] = mmap(0, 320*240*2*fb_buf_count, PROT_READ|PROT_WRITE,
     MAP_SHARED, gpsp_gp2x_dev, fb_paddr[0]);
   if (fb_vaddr[0] == MAP_FAILED)
   {
     perror("mmap(fb_vaddr) failed");
-    exit(1);
+    exit(2);
   }
   memset(fb_vaddr[0], 0, 320*240*2*fb_buf_count);
 
@@ -144,8 +169,14 @@ void pollux_video_flip()
   //gpsp_gp2x_memregl[0x4058>>2] |= 0x10;				  //MLCCONTROL1 0x58
 
   //nirvous adds support for layer0
+  // Reggie added ifdef for didj/lx (set -DLX_BUILD in CFLAGS in the makefile)
+#ifdef LX_BUILD
   gpsp_gp2x_memregl[0x4038>>2] = fb_paddr[fb_work_buf];   //MLCADDRESS0 0x38
-  gpsp_gp2x_memregl[0x4024>>2] |= 0x10;					  //MLCCONTROL0 0x24	
+  gpsp_gp2x_memregl[0x4024>>2] |= 0x10;					  //MLCCONTROL0 0x24
+#else
+  ioctl(fbdev, MLC_IOCTADDRESS, fb_paddr[fb_work_buf]);
+  ioctl(fbdev, MLC_IOCTDIRTY, 0);
+#endif
   fb_work_buf++;
   if (fb_work_buf >= fb_buf_use)
     fb_work_buf = 0;
@@ -172,8 +203,8 @@ void wiz_lcd_set_portrait(int y)
   cmd[0] = y ? 6 : 5;
   //nirvous
   //ioctl(fbdev, _IOW('D', 90, int[2]), cmd);
-  gpsp_gp2x_memregl[0x4004>>2] = y ? 0x013f00ef : 0x00ef013f;
-  gpsp_gp2x_memregl[0x4000>>2] |= 1 << 3;
+  //gpsp_gp2x_memregl[0x4004>>2] = y ? 0x013f00ef : 0x00ef013f;
+  //gpsp_gp2x_memregl[0x4000>>2] |= 1 << 3;
   old_y = y;
 
   /* the above ioctl resets LCD timings, so set them here */
@@ -188,9 +219,9 @@ static void fb_video_exit()
   //gpsp_gp2x_memregl[0x406C>>2] = fb_paddr[0];
   //gpsp_gp2x_memregl[0x4058>>2] |= 0x10;
   //nirvous adds support for layer0
-  gpsp_gp2x_memregl[0x4038>>2] = fb_paddr[0];
-  gpsp_gp2x_memregl[0x4024>>2] |= 0x10;
-  wiz_lcd_set_portrait(0);  
+  //gpsp_gp2x_memregl[0x4038>>2] = fb_paddr[0];
+  //gpsp_gp2x_memregl[0x4024>>2] |= 0x10;
+  wiz_lcd_set_portrait(0);
   ret = ioctl(fbdev, MLC_IOCQADDRESS, 0);
   if (ret == -1)
   {
@@ -204,7 +235,7 @@ static void fb_video_exit()
 	ioctl(fbdev, MLC_IOCTVSTRIDE, original_mlcvstride);
 	ioctl(fbdev, MLC_IOCTDIRTY, 0);
 	close(fbdev);
-  }	
+  }
 }
 
 static int wiz_gamepak_fd = -1;
@@ -275,7 +306,7 @@ static int get_romdir(char *buff, size_t size)
   FILE *f;
   char *s;
   int r = -1;
-  
+
   f = fopen("romdir.txt", "r");
   if (f == NULL)
     return -1;
@@ -340,7 +371,7 @@ void gp2x_quit()
   //nirvous
   //close(gpsp_gp2x_gpiodev);
   poxCloseInput();
-  
+
   fb_video_exit();
   wiz_gamepak_cleanup();
 #endif
@@ -470,7 +501,7 @@ int poxOpenInput()
 			pox_evdev = -1;
 		}
 	}
-	
+
 	return -1;
 }
 

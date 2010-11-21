@@ -578,7 +578,7 @@ u32 key_map(int button)
       return BUTTON_B;
 
     case KEY_A:
-      return BUTTON_A; 
+      return BUTTON_A;
 
     case KEY_P:
       return BUTTON_START;
@@ -599,7 +599,15 @@ u32 update_input()
 		case POX_KEYDOWN:
 			switch (ev.code) {
 				case KEY_M:
-				  quit();
+// Reggie, I R teh copy from the psp update_input
+      {
+        u16 *screen_copy = copy_screen();
+        u32 ret_val = menu(screen_copy);
+        free(screen_copy);
+
+        return ret_val;
+      }
+				  // nirvous
 				  //this should really jump to the menu...
 				case 115: //VolumeUp
 				  gp2x_sound_volume(1);
@@ -607,16 +615,19 @@ u32 update_input()
 				case 114: //VolumeDown
 				  gp2x_sound_volume(0);
 				  break;
+			        case 'x':
+				gp2x_fps_debug ^= 1;
+				break;
 				default:
 				  key |= key_map(ev.code);
 				  trigger_key(key);
 				  break;
 		    }
 		    break;
-		
+
 		case POX_KEYUP:
 			key &= ~(key_map(ev.code));
-			break;	
+			break;
 	   }
    }
    io_registers[REG_P1] = (~key) & 0x3FF;

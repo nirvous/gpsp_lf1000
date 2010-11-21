@@ -78,7 +78,28 @@ HOME                      ->        config options
 How to build from source:
 
 In the lf1000 directory, edit the makefile to reflect your build environment.
-Type make to build gpsp_lf1000.
+Type make to build gpsp_lf1000.  
+
+edit gpsp_lf1000/warm/modules/Makefile to reflect your build environment 
+and edit the CFLAGS to reflect whether you want to build the warm module for
+the didj or the lx, comment/uncomment CFLAGS+= -DLX_BUILD for didj 2.6.20 specific version of gpsp
+
+
+Didj/LX TODO:
+
+tidy up SDL usage, we don't use all of sdl, so don't need to initialise 
+everything. we're limited on ram on the didj, so anything that isn't needed 
+should be gone
+
+Merge didj/lx code via a set of ifdefs and extra CFLAGS into a single lf1000.c
+
+See if we can squeeze more ram/performance out of the unit
+
+Try and shed some light on why we get an lf1000_dma warning periodically
+
+Sort out user menu button configuration mapper?
+
+
 
 
 -- Exophase's and Notaz's original notes from the Wiz gpSP port---
@@ -93,6 +114,22 @@ not apply however).
 
 
 Changelog:
+
+0.9-2xb u8? - not sure if nirvous versioned up the didj/lx master when he added didj/explorer support
+- Reggie's fork
+- fixed home button to return to emulator menu rather than exiting app
+- change audio buffer to give better sound support
+- added code for didj or lx kernels via lf1000didj.c and lf1000lx.c
+- disabled SDL cursor so that it doesn't cause artifacts on the framebuffer (lx kernel)
+- added code to cleanup the framebuffer on exit (used to be garbled, now writing 0xFF 
+  to the pixels on the framebuffer so it doesn't look ugly)
+- added fps debug toggle via brightness button 'x' (lx tested only)
+- harcoded initial cpu to 533Mhz (was 200)
+- added some ioctl calls for the mlc to make behaviour more generic between didj/lx (mlc/framebuffer)
+- added code so that it will start correctly at any bitdepth (set in the patch for didj, framebuffer driver
+  for lx)
+- for more details see comments in:
+  gpsp_lf1000/main.c, sound.c, video.c, input.c and gpsp_lf1000/lf1000/lf1000.c
 
 0.9-2xb u6
 - Fixed clock and scaling config saving.

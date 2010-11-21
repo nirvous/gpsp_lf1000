@@ -86,7 +86,8 @@ u32 synchronize_flag = 1;
 
 u32 update_backup_flag = 1;
 #ifdef GP2X_BUILD
-u32 clock_speed = 200;
+// Reggie, was u32 clock_speed = 200
+u32 clock_speed = 533;
 #else
 u32 clock_speed = 333;
 #endif
@@ -930,6 +931,8 @@ void quit()
 #ifdef PSP_BUILD
   sceKernelExitGame();
 #else
+// Reggie added, tidy up the screen on the way out
+clear_screen(0xFF);
   SDL_Quit();
 
 #ifdef GP2X_BUILD
@@ -1046,6 +1049,8 @@ void printout(void *str, u32 val)
 
 void set_clock_speed()
 {
+// Reggie added printf for debug of cpu speed changes
+  printf("Clock Speed %d \n",clock_speed);
   static u32 clock_speed_old = default_clock_speed;
   if (clock_speed != clock_speed_old)
   {
