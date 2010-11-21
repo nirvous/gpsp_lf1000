@@ -24,6 +24,8 @@ BIN       = gpsp_lf1000
 VPATH      += ..
 CFLAGS     += -DARM_ARCH -DGP2X_BUILD
 CFLAGS     += -DWIZ_BUILD
+# unset LX_BUILD for Didj kernel (2.6.20) binary
+#CFLAGS     += -DLX_BUILD
 
 
 # debug build

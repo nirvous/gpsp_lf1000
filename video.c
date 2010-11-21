@@ -3612,7 +3612,9 @@ void init_video()
 
 #ifdef GP2X_BUILD
   SDL_GP2X_AllowGfxMemory(NULL, 0);
-
+  // Reggie added, sensible thing to do as it stops it trying to draw the cursor
+  // on framebuffer enabled kernels using SDL
+  SDL_ShowCursor(SDL_DISABLE);
   hw_screen = SDL_SetVideoMode(320 * video_scale, 240 * video_scale,
    16, SDL_HWSURFACE);
 
@@ -3623,7 +3625,7 @@ void init_video()
 #else
   screen = SDL_SetVideoMode(240 * video_scale, 160 * video_scale, 16, 0);
 #endif
-  SDL_ShowCursor(0);
+  SDL_ShowCursor(SDL_DISABLE);
 }
 
 #endif
@@ -3807,7 +3809,8 @@ void video_resolution_large()
    0xFFFF, 0xFFFF, 0);
   resolution_width = 320;
     resolution_height = 240;
-  SDL_ShowCursor(0);
+    // Reggie added, turn off the cursor
+  SDL_ShowCursor(SDL_DISABLE);
 
   warm_change_cb_upper(WCB_C_BIT|WCB_B_BIT, 1);
 #else
@@ -3841,14 +3844,16 @@ void video_resolution_small()
   screen = SDL_CreateRGBSurface(SDL_HWSURFACE,
    w, small_resolution_height * video_scale,
    16, 0xFFFF, 0xFFFF, 0xFFFF, 0);
-
-  SDL_ShowCursor(0);
+// Reggie added, turn off the cursor
+  SDL_ShowCursor(SDL_DISABLE);
 
   warm_change_cb_upper(WCB_C_BIT|WCB_B_BIT, 1);
 #else
   screen = SDL_SetVideoMode(small_resolution_width * video_scale,
    small_resolution_height * video_scale, 16, 0);
 #endif
+// Reggie added, turn off the cursor
+SDL_ShowCursor(SDL_DISABLE);
   resolution_width = small_resolution_width;
   resolution_height = small_resolution_height;
 }
